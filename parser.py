@@ -4,7 +4,7 @@ import argparse
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-import dateparser  # type: ignore[import]
+import dateparser
 
 from loader import load_email
 from exporter import export_json
@@ -15,7 +15,7 @@ _nlp: Any = None
 SPACY_AVAILABLE: bool = False
 
 try:
-    import spacy  # type: ignore[import]
+    import spacy
     _nlp = spacy.load("en_core_web_sm")
     SPACY_AVAILABLE = True
 except Exception:
@@ -28,7 +28,7 @@ except Exception:
 FLIGHT_NUMBER_RE = re.compile(r"\b([A-Z]{2})\s?(\d{3,4})\b")
 
 CONF_CODE_RE = re.compile(
-    r"(?:confirmation|reference|booking|code|number)[:\s#]*"
+    r"(?:confirmation|reference|booking|code|number)\s*:\s*"
     r"([A-Z0-9]{5,10})\b",
     re.IGNORECASE,
 )
@@ -81,7 +81,7 @@ def _parse_date(raw: str) -> Optional[str]:
     if result is None:
         return None
     try:
-        return result.date().isoformat()  # type: ignore[union-attr]
+        return result.date().isoformat()
     except AttributeError:
         return None
 
@@ -103,17 +103,21 @@ def _all_dates(text: str) -> List[Tuple[int, str]]:
 
 
 def _flight_text(text: str) -> str:
-    m = re.search(r"\bFLIGHT\b", text, re.IGNORECASE)
+    # Match FLIGHT only at the start of a line (section header)
+    m = re.search(r"(?m)^[ \t=*-]*FLIGHT\b", text, re.IGNORECASE)
     if not m:
         return text
     flight_start = m.start()
-    hotel_m = re.search(r"\bHOTEL\b", text[m.end():], re.IGNORECASE)
+    hotel_m = re.search(
+        r"(?m)^[ \t=*-]*HOTEL\b", text[m.end():], re.IGNORECASE
+    )
     end = m.end() + hotel_m.start() if hotel_m else len(text)
     return text[flight_start:end]
 
 
 def _hotel_text(text: str) -> str:
-    m = re.search(r"\bHOTEL\b", text, re.IGNORECASE)
+    # Match HOTEL only at the start of a line (section header)
+    m = re.search(r"(?m)^[ \t=*-]*HOTEL\b", text, re.IGNORECASE)
     return text[m.start():] if m else text
 
 
@@ -263,6 +267,12 @@ def _extract_codes(text: str) -> List[str]:
     codes: List[str] = []
     for m in CONF_CODE_RE.finditer(text):
         code = m.group(1).upper()
+        # Skip flight-number-shaped values (e.g. UA4521)
+        if re.match(r"^[A-Z]{2}\d{3,4}$", code):
+            continue
+        # Skip purely alphabetic values (common English words)
+        if code.isalpha():
+            continue
         if code not in codes:
             codes.append(code)
             logger.info("confirmation_code: %s", code)
