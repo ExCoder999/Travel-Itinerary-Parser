@@ -1,0 +1,8 @@
+fwd: trip stuff
+
+flt: BA 492
+departs 15/03/2026
+missing airline name
+hotel: some   INN  check in 15/03/2026 check out 18/03/2026
+ref: XY9Z12
+passenger JANE DOE
