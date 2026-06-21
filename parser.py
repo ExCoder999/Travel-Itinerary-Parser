@@ -76,7 +76,7 @@ HOTEL_TERM = frozenset(
 def _parse_date(raw: str) -> Optional[str]:
     result = dateparser.parse(
         raw.strip(),
-        settings={"DATE_ORDER": "DMY", "RETURN_AS_TIMEZONE_AWARE": False},
+        settings={"DATE_ORDER": "MDY", "RETURN_AS_TIMEZONE_AWARE": False},
     )
     if result is None:
         return None
