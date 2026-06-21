@@ -81,6 +81,10 @@ def _parse_date(raw: str) -> Optional[str]:
     if result is None:
         return None
     try:
+        # Preserve time if present (e.g. "April 5, 2026 at 08:30 AM")
+        # dateparser returns a datetime when time is in the input
+        if hasattr(result, "hour") and result.hour is not None:
+            return result.isoformat()
         return result.date().isoformat()
     except AttributeError:
         return None
