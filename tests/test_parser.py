@@ -1,6 +1,6 @@
 from typing import Any, Dict
 
-from parser import _parse_date, parse_email
+from parser import _extract_name, _parse_date, parse_email
 
 SAMPLE = """\
 Subject: Trip Confirmation
@@ -120,3 +120,22 @@ def test_malformed_no_crash() -> None:
     assert isinstance(r, dict)
     assert "flight" in r
     assert "hotel" in r
+
+
+class _FakeEntity:
+    def __init__(self, text: str, label_: str = "PERSON") -> None:
+        self.text = text
+        self.label_ = label_
+
+
+class _FakeDoc:
+    def __init__(self, *ents: _FakeEntity) -> None:
+        self.ents = ents
+
+
+def test_extract_name_rejects_alphanumeric_person_entity() -> None:
+    assert _extract_name("ref: XY9Z12", _FakeDoc(_FakeEntity("XY9Z12"))) is None
+
+
+def test_extract_name_accepts_human_like_person_entity() -> None:
+    assert _extract_name("", _FakeDoc(_FakeEntity("John Smith"))) == "John Smith"
