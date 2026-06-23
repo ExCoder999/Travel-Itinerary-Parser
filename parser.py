@@ -27,6 +27,10 @@ except Exception:
 
 FLIGHT_NUMBER_RE = re.compile(r"\b([A-Z]{2})\s?(\d{3,4})\b")
 
+# The hyphen is escaped and kept last so it is read as a literal, not a range
+# (only space, dot, apostrophe and hyphen join letters in a human name).
+NAME_RE = re.compile(r"^[A-Za-z][A-Za-z .'\-]+$")
+
 CONF_CODE_RE = re.compile(
     r"(?:confirmation|reference|booking|code|number)\s*:\s*"
     r"([A-Z0-9]{5,10})\b",
@@ -296,9 +300,10 @@ def _extract_codes(text: str) -> List[str]:
 def _extract_name(text: str, doc: Any) -> Optional[str]:
     if doc is not None:
         for ent in doc.ents:
-            if ent.label_ == "PERSON":
-                logger.info("passenger_name (spaCy): %s", ent.text)
-                return ent.text.strip()
+            name = ent.text.strip()
+            if ent.label_ == "PERSON" and NAME_RE.match(name):
+                logger.info("passenger_name (spaCy): %s", name)
+                return name
     m = re.search(
         r"dear\s+([\w .'-]+?)(?:[,\n])", text, re.IGNORECASE
     )
