@@ -35,6 +35,26 @@ hotel: some   INN  check in 15/03/2026
 ref: XY9Z12
 """
 
+ALT_SECTION_HEADERS = """\
+Subject: Travel Plans
+
+AIR TRAVEL
+==========
+Flight Number: BA492
+Airline: British Airways
+From: London
+To: Berlin
+Departure: March 15, 2026
+Arrival: March 16, 2026
+
+ACCOMMODATION DETAILS
+=====================
+Booking Reference: HTL789
+Hotel: River Hotel Berlin
+Check-In: April 1, 2026
+Check-Out: April 3, 2026
+"""
+
 
 def test_flight_number() -> None:
     r: Dict[str, Any] = parse_email(SAMPLE)
@@ -147,3 +167,9 @@ def test_extract_name_rejects_punctuation_in_person_entity() -> None:
     for bad in ("John(Smith", "Jane+Doe", "A,B", "x*y", "a)b"):
         assert _extract_name("", _FakeDoc(_FakeEntity(bad))) is None
     assert _extract_name("", _FakeDoc(_FakeEntity("Mary-Jane O'Brien"))) == "Mary-Jane O'Brien"
+def test_alternative_section_headers_prevent_date_bleed() -> None:
+    r: Dict[str, Any] = parse_email(ALT_SECTION_HEADERS)
+    assert r["flight"]["departure"].startswith("2026-03-15")
+    assert r["flight"]["arrival"].startswith("2026-03-16")
+    assert r["hotel"]["check_in"].startswith("2026-04-01")
+    assert r["hotel"]["check_out"].startswith("2026-04-03")

@@ -72,6 +72,18 @@ HOTEL_TERM = frozenset(
     }
 )
 
+FLIGHT_SECTION_RE = re.compile(
+    r"(?m)^[ \t=*-]*"
+    r"(?:FLIGHT|AIR TRAVEL|OUTBOUND|INBOUND|JOURNEY|YOUR ITINERARY)\b",
+    re.IGNORECASE,
+)
+
+HOTEL_SECTION_RE = re.compile(
+    r"(?m)^[ \t=*-]*"
+    r"(?:HOTEL|ACCOMMODATION|LODGING|STAY|PROPERTY|YOUR STAY AT|YOUR RESERVATION)\b",
+    re.IGNORECASE,
+)
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -111,21 +123,19 @@ def _all_dates(text: str) -> List[Tuple[int, str]]:
 
 
 def _flight_text(text: str) -> str:
-    # Match FLIGHT only at the start of a line (section header)
-    m = re.search(r"(?m)^[ \t=*-]*FLIGHT\b", text, re.IGNORECASE)
+    # Match flight section headers only at the start of a line.
+    m = FLIGHT_SECTION_RE.search(text)
     if not m:
         return text
     flight_start = m.start()
-    hotel_m = re.search(
-        r"(?m)^[ \t=*-]*HOTEL\b", text[m.end():], re.IGNORECASE
-    )
+    hotel_m = HOTEL_SECTION_RE.search(text[m.end():])
     end = m.end() + hotel_m.start() if hotel_m else len(text)
     return text[flight_start:end]
 
 
 def _hotel_text(text: str) -> str:
-    # Match HOTEL only at the start of a line (section header)
-    m = re.search(r"(?m)^[ \t=*-]*HOTEL\b", text, re.IGNORECASE)
+    # Match hotel section headers only at the start of a line.
+    m = HOTEL_SECTION_RE.search(text)
     return text[m.start():] if m else text
 
 
