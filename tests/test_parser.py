@@ -139,3 +139,11 @@ def test_extract_name_rejects_alphanumeric_person_entity() -> None:
 
 def test_extract_name_accepts_human_like_person_entity() -> None:
     assert _extract_name("", _FakeDoc(_FakeEntity("John Smith"))) == "John Smith"
+
+
+def test_extract_name_rejects_punctuation_in_person_entity() -> None:
+    # Guards the NAME_RE character class against admitting bracket/operator
+    # punctuation (e.g. if the hyphen were ever read as a range delimiter).
+    for bad in ("John(Smith", "Jane+Doe", "A,B", "x*y", "a)b"):
+        assert _extract_name("", _FakeDoc(_FakeEntity(bad))) is None
+    assert _extract_name("", _FakeDoc(_FakeEntity("Mary-Jane O'Brien"))) == "Mary-Jane O'Brien"
