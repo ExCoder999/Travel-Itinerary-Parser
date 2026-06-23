@@ -89,18 +89,19 @@ HOTEL_SECTION_RE = re.compile(
 # Helpers
 # ---------------------------------------------------------------------------
 
+_TIME_PRESENT_RE = re.compile(r"\d{1,2}:\d{2}", re.IGNORECASE)
+
+
 def _parse_date(raw: str) -> Optional[str]:
     result = dateparser.parse(
         raw.strip(),
-        settings={"DATE_ORDER": "MDY", "RETURN_AS_TIMEZONE_AWARE": False},
+        settings={"DATE_ORDER": "DMY", "RETURN_AS_TIMEZONE_AWARE": False},
     )
     if result is None:
         return None
     try:
-        # Preserve time if present (e.g. "April 5, 2026 at 08:30 AM")
-        # dateparser returns a datetime when time is in the input
-        if hasattr(result, "hour") and result.hour is not None:
-            return result.isoformat()
+        if _TIME_PRESENT_RE.search(raw):
+            return result.isoformat(timespec="minutes")
         return result.date().isoformat()
     except AttributeError:
         return None

@@ -69,7 +69,8 @@ def test_airline() -> None:
 
 def test_departure_date() -> None:
     r: Dict[str, Any] = parse_email(SAMPLE)
-    assert r["flight"]["departure"] == "2026-04-05"
+    # Sample email has a time component — expect full datetime
+    assert r["flight"]["departure"] == "2026-04-05T08:30"
 
 
 def test_hotel_name() -> None:
@@ -166,7 +167,12 @@ def test_extract_name_rejects_punctuation_in_person_entity() -> None:
     # punctuation (e.g. if the hyphen were ever read as a range delimiter).
     for bad in ("John(Smith", "Jane+Doe", "A,B", "x*y", "a)b"):
         assert _extract_name("", _FakeDoc(_FakeEntity(bad))) is None
-    assert _extract_name("", _FakeDoc(_FakeEntity("Mary-Jane O'Brien"))) == "Mary-Jane O'Brien"
+    assert (
+        _extract_name("", _FakeDoc(_FakeEntity("Mary-Jane O'Brien")))
+        == "Mary-Jane O'Brien"
+    )
+
+
 def test_alternative_section_headers_prevent_date_bleed() -> None:
     r: Dict[str, Any] = parse_email(ALT_SECTION_HEADERS)
     assert r["flight"]["departure"].startswith("2026-03-15")
